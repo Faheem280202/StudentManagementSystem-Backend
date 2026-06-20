@@ -8,11 +8,14 @@ namespace StudentManagementSystem.Infrastructure.Services;
 public class AuthService(
     DbConnectionFactory connectionFactory,
     IUserRepository userRepository,
-    IPasswordService passwordService) : IAuthService
+    IPasswordService passwordService,
+    IJwtService jwtService) : IAuthService
 {
     private readonly DbConnectionFactory _connectionFactory = connectionFactory;
     private readonly IUserRepository _userRepository = userRepository;
     private readonly IPasswordService _passwordService = passwordService;
+    private readonly IJwtService _jwtService = jwtService;
+
 
     public async Task<LoginResponse?> LoginAsync(LoginRequest request)
     {
@@ -26,6 +29,8 @@ public class AuthService(
         if (!isValid)
             return null;
 
+        var token = _jwtService.GenerateToken(user);
+
         return new LoginResponse
         {
             UserId = user.UserId,
@@ -33,12 +38,8 @@ public class AuthService(
             FirstName = user.FirstName,
             LastName = user.LastName,
             Email = user.Email,
-            Roles = user.Roles,
-            IsActive = user.IsActive,
-            CreatedDate = user.CreatedDate,
-            CreatedBy = user.CreatedBy,
-            ModifiedDate = user.ModifiedDate,
-            ModifiedBy = user.ModifiedBy
+            Role = user.Role,
+            Token = token
         };
     }
 
@@ -54,31 +55,17 @@ public class AuthService(
                 U.LastName,
                 U.Email,
                 U.PasswordHash,
-                STRING_AGG(R.RoleName, ',') AS Roles,
+                R.RoleName AS [Role],
                 U.IsActive,
-                U.CreatedDate,
+                U.CreatedOn,
                 U.CreatedBy,
-                U.ModifiedDate,
+                U.ModifiedOn,
                 U.ModifiedBy
             FROM tbl_Users AS U WITH(NOLOCK)
-            INNER JOIN tbl_UserRoles AS UR WITH(NOLOCK) ON UR.UserId = U.Id
-            INNER JOIN tbl_Roles AS R WITH(NOLOCK) ON R.Id = UR.RoleId
+            INNER JOIN tbl_Roles AS R WITH(NOLOCK) ON R.Id = U.RoleId
             WHERE U.IsActive = 1
-              AND UR.IsActive = 1
               AND R.IsActive = 1
-              AND U.Email = @Email
-            GROUP BY
-                U.Id,
-                U.UserName,
-                U.FirstName,
-                U.LastName,
-                U.Email,
-                U.PasswordHash,
-                U.IsActive,
-                U.CreatedDate,
-                U.CreatedBy,
-                U.ModifiedDate,
-                U.ModifiedBy";
+              AND U.Email = @Email";
 
         using var command = new SqlCommand(query, connection);
         command.Parameters.AddWithValue("@Email", email);
@@ -95,7 +82,7 @@ public class AuthService(
         return null;
     }
 
-    private LoginResponse MapUser(SqlDataReader reader)
+    private static LoginResponse MapUser(SqlDataReader reader)
     {
         return new LoginResponse
         {
@@ -105,11 +92,11 @@ public class AuthService(
             LastName = reader.GetString(reader.GetOrdinal("LastName")),
             Email = reader.GetString(reader.GetOrdinal("Email")),
             PasswordHash = reader.GetString(reader.GetOrdinal("PasswordHash")),
-            Roles = [.. reader.GetString(reader.GetOrdinal("Roles")).Split(',', StringSplitOptions.RemoveEmptyEntries)],
+            Role = reader.GetString(reader.GetOrdinal("Role")),
             IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
-            CreatedDate = reader.GetDateTime(reader.GetOrdinal("CreatedDate")),
+            CreatedOn = reader.GetDateTime(reader.GetOrdinal("CreatedOn")),
             CreatedBy = reader.IsDBNull(reader.GetOrdinal("CreatedBy")) ? null : reader.GetString(reader.GetOrdinal("CreatedBy")),
-            ModifiedDate = reader.IsDBNull(reader.GetOrdinal("ModifiedDate")) ? null : reader.GetDateTime(reader.GetOrdinal("ModifiedDate")),
+            ModifiedOn = reader.IsDBNull(reader.GetOrdinal("ModifiedOn")) ? null : reader.GetDateTime(reader.GetOrdinal("ModifiedDate")),
             ModifiedBy = reader.IsDBNull(reader.GetOrdinal("ModifiedBy")) ? null : reader.GetString(reader.GetOrdinal("ModifiedBy"))
         };
     }

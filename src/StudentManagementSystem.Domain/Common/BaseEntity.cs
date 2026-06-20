@@ -4,9 +4,9 @@ namespace StudentManagementSystem.Domain.Common
     {
         public int Id { get; set; }
         public bool IsActive { get; set; }
-        public DateTime CreatedDate { get; set; }
+        public DateTime CreatedOn { get; set; }
         public string? CreatedBy { get; set; }
-        public DateTime? ModifiedDate { get; set; }
+        public DateTime? ModifiedOn { get; set; }
         public string? ModifiedBy { get; set; }
     }
 }

@@ -22,9 +22,9 @@ public class RoleRepository : IRoleRepository
                 Id,
                 RoleName,
                 IsActive,
-                CreatedDate,
+                CreatedOn,
                 CreatedBy,
-                ModifiedDate,
+                ModifiedOn,
                 ModifiedBy
             FROM tbl_Roles WITH(NOLOCK)
             WHERE IsActive = 1";
@@ -42,9 +42,9 @@ public class RoleRepository : IRoleRepository
                 Id = Convert.ToInt32(reader["Id"]),
                 RoleName = reader["RoleName"].ToString()!,
                 IsActive = Convert.ToBoolean(reader["IsActive"]),
-                CreatedDate = Convert.ToDateTime(reader["CreatedDate"]),
+                CreatedOn = Convert.ToDateTime(reader["CreatedOn"]),
                 CreatedBy = reader["CreatedBy"].ToString()!,
-                ModifiedDate = reader["ModifiedDate"] as DateTime?,
+                ModifiedOn = reader["ModifiedOn"] as DateTime?,
                 ModifiedBy = reader["ModifiedBy"].ToString()!,
             });
         }
