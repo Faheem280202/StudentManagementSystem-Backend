@@ -65,23 +65,19 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers();
 
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
 var app = builder.Build();
 
-app.UseCors("AllowReactApp");
-
-// Configure the HTTP request pipeline.
 app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
+
 app.UseCors("AllowReact");
+
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
-app.UseHttpsRedirection();
 
 app.Run();
 
